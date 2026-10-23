@@ -40,7 +40,7 @@ def init_db():
         if not row:
             # Change these credentials before putting the site online.
             db.execute("INSERT INTO admin_users(username,password_hash) VALUES(?,?)",
-                       ("admin", generate_password_hash(os.environ.get("HA_ADMIN_PASSWORD", "ChangeMe-0770!"))))
+                       ("aimad", generate_password_hash(os.environ.get("0559910060jsk"))))
         db.commit()
 
 init_db()

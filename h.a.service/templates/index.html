@@ -136,51 +136,85 @@ const translations = {
   "دخول الإدارة": "Accès administration"
 };
 
+
 function changeLanguage(lang) {
+  if (lang !== "ar" && lang !== "fr") return;
   localStorage.setItem("ha_language", lang);
   location.reload();
 }
 
 document.addEventListener("DOMContentLoaded", function () {
   const lang = localStorage.getItem("ha_language") || "ar";
-  document.documentElement.lang = lang;
-  document.documentElement.dir = lang === "fr" ? "ltr" : "rtl";
+  const isFrench = lang === "fr";
 
-  if (lang !== "fr") return;
+  document.documentElement.lang = lang;
+  document.documentElement.dir = isFrench ? "ltr" : "rtl";
+
+  if (!isFrench) return;
+
+  function translateText(text) {
+    const trimmed = text.trim();
+    if (!trimmed) return text;
+
+    if (translations[trimmed]) {
+      return text.replace(trimmed, translations[trimmed]);
+    }
+
+    const withoutStar = trimmed.replace(/\s*\*\s*$/, "");
+    if (translations[withoutStar]) {
+      return text.replace(withoutStar, translations[withoutStar]);
+    }
+
+    return text;
+  }
 
   const walker = document.createTreeWalker(
     document.body,
     NodeFilter.SHOW_TEXT
   );
-  const nodes = [];
 
+  const nodes = [];
   while (walker.nextNode()) {
     nodes.push(walker.currentNode);
   }
 
   nodes.forEach(function (node) {
     const parent = node.parentElement;
-    if (!parent || parent.closest("script, style")) return;
 
-    const original = node.nodeValue;
-    const trimmed = original.trim();
-    if (!translations[trimmed]) return;
+    if (
+      !parent ||
+      parent.closest("script, style, textarea, option")
+    ) {
+      return;
+    }
 
-    const start = original.indexOf(trimmed);
-    node.nodeValue =
-      original.slice(0, start) +
-      translations[trimmed] +
-      original.slice(start + trimmed.length);
+    node.nodeValue = translateText(node.nodeValue);
   });
 
-  document.querySelectorAll("input[placeholder], textarea[placeholder]").forEach(function (el) {
-    if (!el.dataset.originalPlaceholder) {
-      el.dataset.originalPlaceholder = el.placeholder;
+  document.querySelectorAll("select option").forEach(function (option) {
+    if (!option.dataset.originalText) {
+      option.dataset.originalText = option.textContent;
     }
-    if (translations[el.dataset.originalPlaceholder]) {
-      el.placeholder = translations[el.dataset.originalPlaceholder];
+
+    option.textContent = translateText(option.dataset.originalText);
+  });
+
+  document.querySelectorAll(
+    "input[placeholder], textarea[placeholder]"
+  ).forEach(function (element) {
+    const original = element.getAttribute("placeholder");
+    if (original && translations[original]) {
+      element.setAttribute("placeholder", translations[original]);
     }
   });
+
+  document.querySelectorAll("[title]").forEach(function (element) {
+    const original = element.getAttribute("title");
+    if (original && translations[original]) {
+      element.setAttribute("title", translations[original]);
+    }
+  });
+});
 </script>
 </body>
 </html>

@@ -32,15 +32,65 @@ def init_db():
             status TEXT NOT NULL DEFAULT 'جديد', notes TEXT DEFAULT '',
             filename TEXT DEFAULT '', payment_status TEXT DEFAULT 'غير مدفوع'
         )""")
+
         db.execute("""CREATE TABLE IF NOT EXISTS admin_users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL
         )""")
-        row = db.execute("SELECT id FROM admin_users WHERE username='admin'").fetchone()
+
+        # البحث عن حساب المدير الحالي
+        row = db.execute(
+            "SELECT id FROM admin_users WHERE username='aimad'"
+        ).fetchone()
+
         if not row:
-            # Change these credentials before putting the site online.
-            db.execute("INSERT INTO admin_users(username,password_hash) VALUES(?,?)",
-                       ("aimad", generate_password_hash(os.environ.get("0559910060jsk"))))
+            row = db.execute(
+                "SELECT id FROM admin_users WHERE username='admin'"
+            ).fetchone()
+
+            if row:
+                db.execute(
+                    "UPDATE admin_users SET username='aimad' WHERE id=?",
+                    (row["id"],)
+                )
+
+        admin_password = os.environ.get("HA_ADMIN_PASSWORD")
+        reset_requested = os.environ.get("HA_RESET_ADMIN_PASSWORD") == "1"
+
+        # إعادة تعيين كلمة المرور عند طلب ذلك صراحةً
+        if reset_requested and admin_password:
+            row = db.execute(
+                "SELECT id FROM admin_users WHERE username='aimad'"
+            ).fetchone()
+
+            password_hash = generate_password_hash(admin_password)
+
+            if row:
+                db.execute(
+                    "UPDATE admin_users SET password_hash=? WHERE id=?",
+                    (password_hash, row["id"])
+                )
+            else:
+                db.execute(
+                    "INSERT INTO admin_users (username, password_hash) "
+                    "VALUES (?, ?)",
+                    ("aimad", password_hash)
+                )
+
+        # إنشاء حساب المدير إذا لم يكن موجودًا
+        else:
+            row = db.execute(
+                "SELECT id FROM admin_users WHERE username='aimad'"
+            ).fetchone()
+
+            if not row and admin_password:
+                db.execute(
+                    "INSERT INTO admin_users (username, password_hash) "
+                    "VALUES (?, ?)",
+                    ("aimad", generate_password_hash(admin_password))
+                )
+
         db.commit()
 
 init_db()

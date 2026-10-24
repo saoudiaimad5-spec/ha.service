@@ -24,6 +24,18 @@
 <div class="form-heading"><span>01</span><div><h3>معلومات التواصل</h3><p>أدخل معلومات صحيحة ليتسنى لنا التواصل معك.</p></div></div><div class="fields">
 <label>الاسم واللقب *<input name="customer_name" required maxlength="120" autocomplete="name" placeholder="الاسم الكامل"></label><label>رقم الهاتف *<input name="phone" required maxlength="40" autocomplete="tel" placeholder="05 / 06 / 07..."></label><label class="wide">البريد الإلكتروني <small>(اختياري)</small><input name="email" type="email" maxlength="160" placeholder="exemple@email.com"></label></div>
 <div class="form-heading split"><span>02</span><div><h3>تفاصيل الخدمة</h3><p>اشرح ما تحتاجه بشكل واضح.</p></div></div><div class="fields">
+<label>القسم *
+><select name="category" id="category" required>
+  <option value="">اختر القسم</option>
+  <option value="البحوث والمذكرات الجامعية">البحوث والمذكرات الجامعية</option>
+  <option value="الطباعة والنسخ والمسح الضوئي">الطباعة والنسخ والمسح الضوئي</option>
+  <option value="الكتابة وتنسيق الوثائق">الكتابة وتنسيق الوثائق</option>
+  <option value="الخدمات الرقمية والإدارية">الخدمات الرقمية والإدارية</option>
+  <option value="التصميم والإشهار">التصميم والإشهار</option>
+  <option value="الخدمات المدرسية والجامعية">الخدمات المدرسية والجامعية</option>
+  <option value="خدمات المؤسسات والتجار">خدمات المؤسسات والتجار</option>
+  <option value="خدمة أخرى">خدمة أخرى</option>
+</select></label>
 <label>القسم *<select name="category" id="category" required><option value="">اختر القسم</option><option>البحوث والمذكرات الجامعية</option><option>الطباعة والنسخ والمسح الضوئي</option><option>الكتابة وتنسيق الوثائق</option><option>الخدمات الرقمية والإدارية</option><option>التصميم والإشهار</option><option>الخدمات المدرسية والجامعية</option><option>خدمات المؤسسات والتجار</option><option>خدمة أخرى</option></select></label>
 <label>الخدمة المطلوبة *<input name="service" id="service" required maxlength="160" placeholder="اكتب اسم الخدمة المطلوبة"></label>
 <label class="wide">وصف الطلب *<textarea name="details" required rows="5" maxlength="5000" placeholder="ما المطلوب بالضبط؟ اذكر المقاس أو اللغة أو التعليمات المهمة..."></textarea></label>
@@ -133,10 +145,40 @@ const translations = {
   "أرسل طلبك أو تواصل معنا مباشرة لتوضيح التفاصيل.": "Envoyez votre demande ou contactez-nous directement pour préciser les détails.",
   "إنشاء طلب جديد ↗": "Créer une nouvelle demande ↗",
   "جميع الحقوق محفوظة": "Tous droits réservés",
-  "دخول الإدارة": "Accès administration"
+  "دخول الإدارة": "Accès administration",
+"اتصل بنا": "Contactez-nous",
+"القسم *": "Catégorie *",
+"اختر القسم": "Choisir une catégorie",
+"البحوث والمذكرات الجامعية": "Recherches et mémoires universitaires",
+"الطباعة والنسخ والمسح الضوئي": "Impression, photocopie et numérisation",
+"الكتابة وتنسيق الوثائق": "Saisie et mise en forme de documents",
+"الخدمات الرقمية والإدارية": "Services numériques et administratifs",
+"التصميم والإشهار": "Design et publicité",
+"الخدمات المدرسية والجامعية": "Services scolaires et universitaires",
+"خدمات المؤسسات والتجار": "Services aux entreprises et commerçants",
+"خدمة أخرى": "Autre service",
+"الخدمة المطلوبة *": "Service demandé *",
+"اكتب اسم الخدمة المطلوبة": "Saisissez le nom du service demandé",
+"وصف الطلب *": "Description de la demande *",
+"ما المطلوب بالضبط؟ اذكر المقاس أو اللغة أو التعليمات المهمة...": "Décrivez précisément votre demande : dimensions, langue ou instructions importantes...",
+"الكمية أو عدد الصفحات": "Quantité ou nombre de pages",
+"مثال: 25 صفحة": "Exemple : 25 pages",
+"الموعد المرغوب": "Délai souhaité",
+"مثال: نهاية الأسبوع": "Exemple : fin de semaine",
+"إرفاق ملف (اختياري)": "Joindre un fichier (facultatif)",
+"الحد الأقصى 12MB. الملفات المدعومة موضحة هنا.": "Taille maximale : 12 Mo. Les formats acceptés sont indiqués ici.",
+"الاستلام والدفع": "Livraison et paiement",
+"سيتم تأكيد السعر قبل بدء الخدمة.": "Le prix sera confirmé avant le début du service.",
+"طريقة الاستلام *": "Mode de réception *",
+"استلام من المكتب": "Retrait au bureau",
+"إرسال رقمي إذا كانت الخدمة تسمح": "Envoi numérique si le service le permet",
+"أرغب في الاتفاق مع المكتب": "À convenir avec le bureau",
+"طريقة الدفع المفضلة *": "Mode de paiement préféré *",
+"الدفع في المكتب عند الاستلام": "Paiement au bureau lors du retrait",
+"الدفع عند زيارة المكتب": "Paiement lors de la visite au bureau",
+"أرغب بالدفع الإلكتروني بالبطاقة الذهبية (يتطلب تأكيد المكتب)": "Paiement électronique par carte Edahabia (confirmation du bureau requise)"
 };
-
-
+  
 function changeLanguage(lang) {
   if (lang !== "ar" && lang !== "fr") return;
   localStorage.setItem("ha_language", lang);

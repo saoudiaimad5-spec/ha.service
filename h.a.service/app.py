@@ -186,6 +186,28 @@ def admin_dashboard():
         orders = db.execute(sql, args).fetchall()
     return render_template("admin.html", orders=orders, totals=totals, q=q, selected_status=status)
 
+@app.route("/admin/delete/<int:order_id>", methods=["POST"])
+@admin_required
+def delete_order(order_id):
+    with connect() as db:
+        order = db.execute(
+            "SELECT id FROM orders WHERE id = ?",
+            (order_id,)
+        ).fetchone()
+
+        if not order:
+            flash("الطلب غير موجود أو تم حذفه مسبقًا.", "error")
+            return redirect(url_for("admin_dashboard"))
+
+        db.execute(
+            "DELETE FROM orders WHERE id = ?",
+            (order_id,)
+        )
+        db.commit()
+
+    flash("تم حذف الطلب بنجاح.", "success")
+    return redirect(url_for("admin_dashboard"))
+
 @app.route("/admin/order/<int:order_id>", methods=["POST"])
 @admin_required
 def update_order(order_id):

@@ -40,73 +40,38 @@
 <footer><a class="logo" href="#"><b>H<span>&amp;</span>A</b><small>SERVICE</small></a><span>© {{ year }} H&amp;A SERVICE — جميع الحقوق محفوظة</span><a href="{{ url_for('admin_login') }}">دخول الإدارة</a></footer>
 <script>document.querySelectorAll('[data-service]').forEach(a=>a.addEventListener('click',()=>{document.getElementById('category').value=a.dataset.service;document.getElementById('service').value=a.dataset.service;}));</script>
 <script>
-const translations = {
+  const translations = {
   "الخدمات": "Services",
   "خدماتنا": "Nos services",
   "كيف نعمل؟": "Comment ça marche ?",
   "اطلب خدمة": "Demander un service",
   "اتصل بنا": "Contact",
-  "ابدأ طلبك ↙": "Commencer ↙",
+  "ابدأ طلبك": "Commencer votre demande",
   "مكتب الخدمات الإدارية والرقمية": "Bureau de services administratifs et numériques",
-  "كل خدماتك،": "Tous vos services,",
-  "في مكان واحد.": "au même endroit.",
-  "خدمات متنوعة،": "Des services variés,",
-  "بخطوات بسيطة.": "en quelques étapes simples.",
-  "البحوث والمذكرات": "Recherche et mémoires",
-  "الطباعة والنسخ": "Impression et photocopie",
-  "المسح الضوئي والملفات": "Numérisation et fichiers",
-  "الكتابة الإدارية": "Rédaction administrative",
-  "الخدمات الرقمية": "Services numériques",
-  "التصميم والإشهار": "Design et publicité",
-  "طريقة العمل": "Notre méthode",
-  "أرسل طلبك": "Envoyez votre demande",
-  "نؤكد التفاصيل": "Nous confirmons les détails",
-  "استلم عملك": "Récupérez votre travail",
+  "طريقة العمل": "Notre méthode de travail",
   "نموذج الطلب": "Formulaire de demande",
   "معلومات التواصل": "Coordonnées",
   "الاسم واللقب": "Nom et prénom",
-  "رقم الهاتف": "Téléphone",
+  "رقم الهاتف": "Numéro de téléphone",
   "البريد الإلكتروني": "Adresse e-mail",
   "تفاصيل الخدمة": "Détails du service",
-  "القسم": "Catégorie",
   "الخدمة المطلوبة": "Service demandé",
   "وصف الطلب": "Description de la demande",
   "الكمية أو عدد الصفحات": "Quantité ou nombre de pages",
-  "الموعد المرغوب": "Délai souhaité",
-  "إرفاق ملف (اختياري)": "Joindre un fichier (facultatif)",
-  "الاستلام والدفع": "Livraison et paiement",
   "طريقة الاستلام": "Mode de livraison",
   "طريقة الدفع المفضلة": "Mode de paiement préféré",
   "تسجيل الطلب": "Envoyer la demande",
-  "نرحب بزيارتكم": "Bienvenue",
+  "دخول الإدارة": "Accès administrateur",
   "العنوان": "Adresse",
-  "الهاتف وواتساب": "Téléphone et WhatsApp",
-  "دخول الإدارة": "Accès administration",
-  "جميع الحقوق محفوظة": "Tous droits réservés",
-  "اختر القسم": "Choisissez une catégorie",
-  "استلام من المكتب": "Retrait au bureau",
-  "إرسال رقمي إذا كانت الخدمة تسمح": "Envoi numérique si le service le permet",
-  "أرغب في الاتفاق مع المكتب": "À convenir avec le bureau",
-  "الدفع في المكتب عند الاستلام": "Paiement au bureau lors du retrait",
-  "الدفع عند زيارة المكتب": "Paiement lors de la visite au bureau"
+  "جميع الحقوق محفوظة": "Tous droits réservés"
 };
 
-function changeLanguage(lang) {
-  localStorage.setItem("ha_language", lang);
-  applyLanguage(lang);
-}
-
-function applyLanguage(lang) {
+function translatePage(lang) {
   document.documentElement.lang = lang;
   document.documentElement.dir = lang === "fr" ? "ltr" : "rtl";
 
-  document.querySelectorAll("[data-i18n]").forEach(el => {
-    const key = el.dataset.i18n;
-    if (lang === "fr" && translations[key]) {
-      el.textContent = translations[key];
-    } else if (lang === "ar" && el.dataset.ar) {
-      el.textContent = el.dataset.ar;
-    }
+  document.querySelectorAll("[data-translate-original]").forEach(el => {
+    el.textContent = el.getAttribute("data-translate-original");
   });
 
   if (lang === "fr") {
@@ -114,32 +79,40 @@ function applyLanguage(lang) {
       document.body,
       NodeFilter.SHOW_TEXT
     );
+
     const nodes = [];
-    while (walker.nextNode()) nodes.push(walker.currentNode);
+    while (walker.nextNode()) {
+      nodes.push(walker.currentNode);
+    }
 
     nodes.forEach(node => {
-      if (!node.parentElement.closest("script,style")) {
-        if (!node.dataset.originalText) {
-          node.dataset.originalText = node.nodeValue;
-        }
-        const original = node.dataset.originalText;
-        const key = original.trim();
-        if (translations[key]) {
-          const start = original.indexOf(key);
-          node.nodeValue = original.slice(0, start) +
-            translations[key] +
-            original.slice(start + key.length);
-        }
+      const parent = node.parentElement;
+      if (!parent || parent.closest("script, style, textarea, input, select, option")) {
+        return;
       }
+
+      const original = node.nodeValue;
+      const trimmed = original.trim();
+
+      if (!trimmed || !translations[trimmed]) return;
+
+      if (!node.parentElement.hasAttribute("data-translate-original")) {
+        node.parentElement.setAttribute(
+          "data-translate-original",
+          node.parentElement.textContent
+        );
+      }
+
+      node.nodeValue = original.replace(trimmed, translations[trimmed]);
     });
-  } else {
-    location.reload();
   }
+
+  localStorage.setItem("ha_language", lang);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const lang = localStorage.getItem("ha_language") || "ar";
-  if (lang === "fr") applyLanguage("fr");
+  const savedLanguage = localStorage.getItem("ha_language") || "ar";
+  translatePage(savedLanguage);
 });
 
 document.addEventListener("DOMContentLoaded", () => {

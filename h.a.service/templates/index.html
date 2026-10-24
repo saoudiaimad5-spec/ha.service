@@ -42,6 +42,7 @@
 <script>
 const translations = {
   "الخدمات": "Services",
+  "خدماتنا": "Nos services",
   "كيف نعمل؟": "Comment ça marche ?",
   "اطلب خدمة": "Demander un service",
   "اتصل بنا": "Contact",
@@ -49,9 +50,6 @@ const translations = {
   "مكتب الخدمات الإدارية والرقمية": "Bureau de services administratifs et numériques",
   "كل خدماتك،": "Tous vos services,",
   "في مكان واحد.": "au même endroit.",
-  "اطلب خدمتك الآن": "Demandez votre service",
-  "تواصل عبر واتساب ↗": "Contacter par WhatsApp ↗",
-  "خدماتنا": "Nos services",
   "خدمات متنوعة،": "Des services variés,",
   "بخطوات بسيطة.": "en quelques étapes simples.",
   "البحوث والمذكرات": "Recherche et mémoires",
@@ -61,8 +59,6 @@ const translations = {
   "الخدمات الرقمية": "Services numériques",
   "التصميم والإشهار": "Design et publicité",
   "طريقة العمل": "Notre méthode",
-  "من الطلب إلى ": "De la demande à ",
-  "الاستلام.": "la livraison.",
   "أرسل طلبك": "Envoyez votre demande",
   "نؤكد التفاصيل": "Nous confirmons les détails",
   "استلم عملك": "Récupérez votre travail",
@@ -82,11 +78,17 @@ const translations = {
   "طريقة الاستلام": "Mode de livraison",
   "طريقة الدفع المفضلة": "Mode de paiement préféré",
   "تسجيل الطلب": "Envoyer la demande",
-  "نرحب بزيارتكم": "Nous vous souhaitons la bienvenue",
+  "نرحب بزيارتكم": "Bienvenue",
   "العنوان": "Adresse",
   "الهاتف وواتساب": "Téléphone et WhatsApp",
   "دخول الإدارة": "Accès administration",
-  "جميع الحقوق محفوظة": "Tous droits réservés"
+  "جميع الحقوق محفوظة": "Tous droits réservés",
+  "اختر القسم": "Choisissez une catégorie",
+  "استلام من المكتب": "Retrait au bureau",
+  "إرسال رقمي إذا كانت الخدمة تسمح": "Envoi numérique si le service le permet",
+  "أرغب في الاتفاق مع المكتب": "À convenir avec le bureau",
+  "الدفع في المكتب عند الاستلام": "Paiement au bureau lors du retrait",
+  "الدفع عند زيارة المكتب": "Paiement lors de la visite au bureau"
 };
 
 function changeLanguage(lang) {
@@ -98,38 +100,51 @@ function applyLanguage(lang) {
   document.documentElement.lang = lang;
   document.documentElement.dir = lang === "fr" ? "ltr" : "rtl";
 
-  if (lang === "ar") {
-    location.reload();
-    return;
-  }
-
-  const walker = document.createTreeWalker(
-    document.body,
-    NodeFilter.SHOW_TEXT
-  );
-
-  const nodes = [];
-  while (walker.nextNode()) nodes.push(walker.currentNode);
-
-  nodes.forEach(node => {
-    if (!node.dataset.originalText) {
-      node.dataset.originalText = node.nodeValue;
-    }
-
-    const original = node.dataset.originalText.trim();
-    if (translations[original]) {
-      node.nodeValue = node.nodeValue.replace(
-        node.nodeValue.trim(),
-        translations[original]
-      );
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.dataset.i18n;
+    if (lang === "fr" && translations[key]) {
+      el.textContent = translations[key];
+    } else if (lang === "ar" && el.dataset.ar) {
+      el.textContent = el.dataset.ar;
     }
   });
+
+  if (lang === "fr") {
+    const walker = document.createTreeWalker(
+      document.body,
+      NodeFilter.SHOW_TEXT
+    );
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+
+    nodes.forEach(node => {
+      if (!node.parentElement.closest("script,style")) {
+        if (!node.dataset.originalText) {
+          node.dataset.originalText = node.nodeValue;
+        }
+        const original = node.dataset.originalText;
+        const key = original.trim();
+        if (translations[key]) {
+          const start = original.indexOf(key);
+          node.nodeValue = original.slice(0, start) +
+            translations[key] +
+            original.slice(start + key.length);
+        }
+      }
+    });
+  } else {
+    location.reload();
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   const lang = localStorage.getItem("ha_language") || "ar";
   if (lang === "fr") applyLanguage("fr");
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+  const lang = localStorage.getItem("ha_language") || "ar";
+  if (lang === "fr") applyLanguage("fr");
+});
 </script>
-</body>
-</html></body></html>
+</body></html>

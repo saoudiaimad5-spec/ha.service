@@ -39,82 +39,150 @@
 <section class="closing" id="contact"><div><div class="eyebrow"><i></i> H&amp;A SERVICE</div><h2>خدمتك تبدأ <em>بخطوة.</em></h2><p>أرسل طلبك أو تواصل معنا مباشرة لتوضيح التفاصيل.</p></div><a class="btn gold" href="#request">إنشاء طلب جديد ↗</a></section></main>
 <footer><a class="logo" href="#"><b>H<span>&amp;</span>A</b><small>SERVICE</small></a><span>© {{ year }} H&amp;A SERVICE — جميع الحقوق محفوظة</span><a href="{{ url_for('admin_login') }}">دخول الإدارة</a></footer>
 <script>document.querySelectorAll('[data-service]').forEach(a=>a.addEventListener('click',()=>{document.getElementById('category').value=a.dataset.service;document.getElementById('service').value=a.dataset.service;}));</script>
+ مكانه. لا تحذف سكريبت اختيار الخدمة الذي يسبقه.
+
+
 <script>
-  const translations = {
+const translations = {
   "الخدمات": "Services",
-  "خدماتنا": "Nos services",
   "كيف نعمل؟": "Comment ça marche ?",
   "اطلب خدمة": "Demander un service",
   "اتصل بنا": "Contact",
-  "ابدأ طلبك": "Commencer votre demande",
+  "ابدأ طلبك ↙": "Commencer ↙",
   "مكتب الخدمات الإدارية والرقمية": "Bureau de services administratifs et numériques",
-  "طريقة العمل": "Notre méthode de travail",
+  "كل خدماتك،": "Tous vos services,",
+  "في مكان واحد.": "au même endroit.",
+  "خدمات مكتبية، إدارية، جامعية ورقمية باهتمام بالتفاصيل وتنظيم واضح من الطلب إلى التسليم.": "Des services bureautiques, administratifs, universitaires et numériques, avec une organisation claire du début à la livraison.",
+  "اطلب خدمتك الآن": "Demandez votre service",
+  "تواصل عبر واتساب ↗": "Contactez-nous sur WhatsApp ↗",
+  "01 / طلب واضح": "01 / Demande claire",
+  "02 / تأكيد التفاصيل": "02 / Confirmation des détails",
+  "03 / استلام العمل": "03 / Livraison du travail",
+  "خدمات متنوعة،": "Des services variés,",
+  "بخطوات بسيطة.": "en quelques étapes simples.",
+  "اختر القسم المناسب، ثم أرسل وصفًا واضحًا لطلبك. نتواصل معك لتأكيد التفاصيل والتكلفة قبل بدء العمل.": "Choisissez une catégorie et décrivez votre demande. Nous vous contacterons pour confirmer les détails et le prix avant de commencer.",
+  "البحوث والمذكرات": "Recherches et mémoires",
+  "تنسيق الوثائق الأكاديمية، إعداد العروض، تنظيم المراجع ومساعدة في تنسيق البحوث والمذكرات وفق تعليمات الزبون.": "Mise en forme de documents universitaires, présentations, références et mémoires selon vos consignes.",
+  "الطباعة والنسخ": "Impression et photocopie",
+  "طباعة أبيض وأسود أو ألوان، نسخ المستندات، وتجهيز ملفات للطباعة حسب الكمية والمقاس.": "Impression en noir et blanc ou en couleur, photocopies et préparation des fichiers selon le format demandé.",
+  "المسح الضوئي والملفات": "Numérisation et fichiers",
+  "تحويل المستندات إلى PDF، تنظيم الملفات الرقمية وتجهيز النسخ الإلكترونية.": "Conversion de documents en PDF, organisation des fichiers et préparation de copies numériques.",
+  "الكتابة الإدارية": "Rédaction administrative",
+  "كتابة الطلبات والرسائل، تنسيق Word وPDF، وإعداد السير الذاتية والوثائق المكتبية.": "Rédaction de demandes et de lettres, mise en forme Word et PDF, CV et documents administratifs.",
+  "الخدمات الرقمية": "Services numériques",
+  "المساعدة في تعبئة الاستمارات والتسجيلات الإلكترونية وإدخال البيانات وفق المعلومات التي يقدمها الزبون.": "Aide au remplissage de formulaires, aux inscriptions en ligne et à la saisie de données fournies par le client.",
+  "التصميم والإشهار": "Design et publicité",
+  "تصميم إعلانات وبطاقات تعريفية ومواد بصرية للمشاريع والمحلات والمؤسسات.": "Création de publicités, cartes de visite et supports visuels pour projets, commerces et entreprises.",
+  "اطلب هذه الخدمة ↙": "Demander ce service ↙",
+  "تُراجع كل خدمة حسب طبيعتها وإمكانية إنجازها. لا نقدم ضمانًا لقبول الملفات أو نتائج التسجيلات لدى الجهات الخارجية.": "Chaque demande est étudiée selon sa nature et sa faisabilité. Nous ne garantissons pas l'acceptation des dossiers ni les résultats des inscriptions auprès d'organismes externes.",
+  "خدماتنا": "Nos services",
+  "طريقة العمل": "Notre méthode",
+  "من الطلب إلى": "De la demande à",
+  "الاستلام.": "la livraison.",
+  "أرسل طلبك": "Envoyez votre demande",
+  "اكتب الخدمة المطلوبة وأضف التفاصيل والملف إن وجد.": "Indiquez le service souhaité, les détails et joignez un fichier si nécessaire.",
+  "نؤكد التفاصيل": "Nous confirmons les détails",
+  "يتواصل المكتب معك لتأكيد السعر والمدة وطريقة الدفع.": "Le bureau vous contacte pour confirmer le prix, le délai et le mode de paiement.",
+  "استلم عملك": "Récupérez votre travail",
+  "اختر الاستلام من المكتب أو التسليم الرقمي عند توفره.": "Choisissez le retrait au bureau ou la livraison numérique lorsqu'elle est disponible.",
   "نموذج الطلب": "Formulaire de demande",
+  "أخبرنا بما": "Dites-nous ce dont",
+  "تحتاجه.": "vous avez besoin.",
+  "الحقول المعلّمة بنجمة إلزامية. سيُنشأ رقم طلب لمتابعته مع المكتب.": "Les champs marqués d'un astérisque sont obligatoires. Un numéro de commande sera créé pour le suivi.",
   "معلومات التواصل": "Coordonnées",
+  "أدخل معلومات صحيحة ليتسنى لنا التواصل معك.": "Saisissez des informations exactes afin que nous puissions vous contacter.",
   "الاسم واللقب": "Nom et prénom",
-  "رقم الهاتف": "Numéro de téléphone",
+  "الاسم الكامل": "Nom complet",
+  "رقم الهاتف": "Téléphone",
   "البريد الإلكتروني": "Adresse e-mail",
+  "(اختياري)": "(facultatif)",
   "تفاصيل الخدمة": "Détails du service",
+  "اشرح ما تحتاجه بشكل واضح.": "Décrivez clairement votre demande.",
+  "القسم": "Catégorie",
+  "اختر القسم": "Choisissez une catégorie",
   "الخدمة المطلوبة": "Service demandé",
+  "اكتب اسم الخدمة المطلوبة": "Saisissez le nom du service demandé",
   "وصف الطلب": "Description de la demande",
+  "ما المطلوب بالضبط؟ اذكر المقاس أو اللغة أو التعليمات المهمة...": "Que souhaitez-vous exactement ? Précisez le format, la langue et les consignes importantes...",
   "الكمية أو عدد الصفحات": "Quantité ou nombre de pages",
+  "مثال: 25 صفحة": "Exemple : 25 pages",
+  "الموعد المرغوب": "Délai souhaité",
+  "مثال: نهاية الأسبوع": "Exemple : fin de semaine",
+  "إرفاق ملف (اختياري)": "Joindre un fichier (facultatif)",
+  "الحد الأقصى 12MB. الملفات المدعومة موضحة هنا.": "Taille maximale : 12 Mo. Les formats acceptés sont indiqués ici.",
+  "الاستلام والدفع": "Livraison et paiement",
+  "سيتم تأكيد السعر قبل بدء الخدمة.": "Le prix sera confirmé avant le début du service.",
   "طريقة الاستلام": "Mode de livraison",
   "طريقة الدفع المفضلة": "Mode de paiement préféré",
+  "استلام من المكتب": "Retrait au bureau",
+  "إرسال رقمي إذا كانت الخدمة تسمح": "Envoi numérique si le service le permet",
+  "أرغب في الاتفاق مع المكتب": "À convenir avec le bureau",
+  "الدفع في المكتب عند الاستلام": "Paiement au bureau lors du retrait",
+  "الدفع عند زيارة المكتب": "Paiement lors de la visite au bureau",
+  "أرغب بالدفع الإلكتروني بالبطاقة الذهبية (يتطلب تأكيد المكتب)": "Je souhaite payer par carte Edahabia (confirmation du bureau requise)",
+  "حماية معلوماتك: لا تدخل رقم البطاقة الذهبية أو الرقم السري أو رمز OTP في هذا النموذج. الدفع الإلكتروني الحقيقي غير مفعّل حتى ربط بوابة دفع رسمية.": "Protection de vos données : ne saisissez jamais votre numéro de carte Edahabia, votre code PIN ou votre code OTP dans ce formulaire. Le paiement en ligne n'est pas activé tant qu'une passerelle officielle n'est pas intégrée.",
+  "أوافق على استخدام المعلومات التي أدخلتها للتواصل معي ومعالجة هذا الطلب.": "J'accepte l'utilisation des informations saisies pour me contacter et traiter ma demande.",
   "تسجيل الطلب": "Envoyer la demande",
-  "دخول الإدارة": "Accès administrateur",
+  "نرحب بزيارتكم": "Nous vous souhaitons la bienvenue",
+  "يمكنك زيارة المكتب لمناقشة طلبك، تأكيد السعر، الدفع واستلام العمل.": "Vous pouvez visiter notre bureau pour discuter de votre demande, confirmer le prix, payer et récupérer votre travail.",
   "العنوان": "Adresse",
-  "جميع الحقوق محفوظة": "Tous droits réservés"
+  "الهاتف وواتساب": "Téléphone et WhatsApp",
+  "ابحث عن العنوان على الخريطة ↗": "Rechercher l'adresse sur la carte ↗",
+  "خدمتك تبدأ": "Votre service commence",
+  "بخطوة.": "par un premier pas.",
+  "أرسل طلبك أو تواصل معنا مباشرة لتوضيح التفاصيل.": "Envoyez votre demande ou contactez-nous directement pour préciser les détails.",
+  "إنشاء طلب جديد ↗": "Créer une nouvelle demande ↗",
+  "جميع الحقوق محفوظة": "Tous droits réservés",
+  "دخول الإدارة": "Accès administration"
 };
 
-function translatePage(lang) {
+function changeLanguage(lang) {
+  localStorage.setItem("ha_language", lang);
+  location.reload();
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  const lang = localStorage.getItem("ha_language") || "ar";
   document.documentElement.lang = lang;
   document.documentElement.dir = lang === "fr" ? "ltr" : "rtl";
 
-  document.querySelectorAll("[data-translate-original]").forEach(el => {
-    el.textContent = el.getAttribute("data-translate-original");
-  });
+  if (lang !== "fr") return;
 
-  if (lang === "fr") {
-    const walker = document.createTreeWalker(
-      document.body,
-      NodeFilter.SHOW_TEXT
-    );
+  const walker = document.createTreeWalker(
+    document.body,
+    NodeFilter.SHOW_TEXT
+  );
+  const nodes = [];
 
-    const nodes = [];
-    while (walker.nextNode()) {
-      nodes.push(walker.currentNode);
-    }
-
-    nodes.forEach(node => {
-      const parent = node.parentElement;
-      if (!parent || parent.closest("script, style, textarea, input, select, option")) {
-        return;
-      }
-
-      const original = node.nodeValue;
-      const trimmed = original.trim();
-
-      if (!trimmed || !translations[trimmed]) return;
-
-      if (!node.parentElement.hasAttribute("data-translate-original")) {
-        node.parentElement.setAttribute(
-          "data-translate-original",
-          node.parentElement.textContent
-        );
-      }
-
-      node.nodeValue = original.replace(trimmed, translations[trimmed]);
-    });
+  while (walker.nextNode()) {
+    nodes.push(walker.currentNode);
   }
 
-  localStorage.setItem("ha_language", lang);
-}
+  nodes.forEach(function (node) {
+    const parent = node.parentElement;
+    if (!parent || parent.closest("script, style")) return;
 
-document.addEventListener("DOMContentLoaded", () => {
-  const savedLanguage = localStorage.getItem("ha_language") || "ar";
-  translatePage(savedLanguage);
+    const original = node.nodeValue;
+    const trimmed = original.trim();
+    if (!translations[trimmed]) return;
+
+    const start = original.indexOf(trimmed);
+    node.nodeValue =
+      original.slice(0, start) +
+      translations[trimmed] +
+      original.slice(start + trimmed.length);
+  });
+
+  document.querySelectorAll("input[placeholder], textarea[placeholder]").forEach(function (el) {
+    if (!el.dataset.originalPlaceholder) {
+      el.dataset.originalPlaceholder = el.placeholder;
+    }
+    if (translations[el.dataset.originalPlaceholder]) {
+      el.placeholder = translations[el.dataset.originalPlaceholder];
+    }
+  });
 });
-
+</script>
 document.addEventListener("DOMContentLoaded", () => {
   const lang = localStorage.getItem("ha_language") || "ar";
   if (lang === "fr") applyLanguage("fr");

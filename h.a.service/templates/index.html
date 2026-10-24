@@ -215,6 +215,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
+</script>window.changeLanguage = function(lang) {
+  if (lang !== "ar" && lang !== "fr") return;
+
+  localStorage.setItem("ha_language", lang);
+  location.reload();
+};
 </script>
 </body>
 </html>

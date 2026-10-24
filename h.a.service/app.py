@@ -417,7 +417,95 @@ def admin_dashboard():
             ])
 
         if status in STATUSES:
+            
+@app.route("/admin")
+@admin_required
+def admin_dashboard():
+    q = request.args.get("q", "").strip()
+    status = request.args.get("status", "").strip()
+
+    with connect() as db:
+        totals = {
+            "all": db.execute(
+                "SELECT COUNT(*) AS count FROM orders"
+            ).fetchone()["count"],
+
+            "new": db.execute(
+                "SELECT COUNT(*) AS count FROM orders WHERE status = %s",
+                ("جديد",)
+            ).fetchone()["count"],
+
+            "progress": db.execute(
+                "SELECT COUNT(*) AS count FROM orders WHERE status = %s",
+                ("قيد الإنجاز",)
+            ).fetchone()["count"],
+
+            "ready": db.execute(
+                "SELECT COUNT(*) AS count FROM orders WHERE status = %s",
+                ("جاهز للاستلام",)
+            ).fetchone()["count"],
+
+            "paid": db.execute(
+                """SELECT COUNT(*) AS count FROM orders
+                   WHERE payment_status IN (%s, %s)""",
+                ("مدفوع في المكتب", "مدفوع إلكترونيًا")
+            ).fetchone()["count"],
+
+            "pending_payment": db.execute(
+                "SELECT COUNT(*) AS count FROM orders WHERE payment_status = %s",
+                ("بانتظار الدفع",)
+            ).fetchone()["count"],
+
+            "unpaid": db.execute(
+                "SELECT COUNT(*) AS count FROM orders WHERE payment_status = %s",
+                ("غير مدفوع",)
+            ).fetchone()["count"],
+
+            "completed": db.execute(
+                "SELECT COUNT(*) AS count FROM orders WHERE status = %s",
+                ("تم التسليم",)
+            ).fetchone()["count"],
+        }
+
+        sql = "SELECT * FROM orders WHERE 1=1"
+        args = []
+
+        if q:
+            order_number = q.upper().removeprefix("HA-").lstrip("0")
+            if not order_number:
+                order_number = "0"
+
+            sql += """
+                AND (
+                    customer_name LIKE %s
+                    OR phone LIKE %s
+                    OR service LIKE %s
+                    OR CAST(id AS TEXT) = %s
+                )
+            """
+            args.extend([
+                f"%{q}%",
+                f"%{q}%",
+                f"%{q}%",
+                order_number
+            ])
+
+        if status in STATUSES:
             sql += " AND status = %s"
+            args.append(status)
+
+        sql += " ORDER BY id DESC LIMIT 300"
+        orders = db.execute(sql, args).fetchall()
+
+    return render_template(
+        "admin.html",
+        orders=orders,
+        totals=totals,
+        q=q,
+        selected_status=status,
+        statuses=STATUSES
+    )
+sql += " AND status = %s"
             args.append(status)
 
         sql += " ORDER BY id DESC LIMIT 300"

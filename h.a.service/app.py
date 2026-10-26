@@ -16,6 +16,7 @@ from flask import (
     session,
     flash,
     abort,
+    jsonify,
     send_from_directory,
 )
 
@@ -568,6 +569,65 @@ def admin_dashboard():
         selected_status=status,
         statuses=STATUSES,
     )
+    
+# =========================================================
+# API: إشعارات الطلبات الجديدة داخل لوحة الإدارة
+# =========================================================
+
+@app.route("/admin/api/new-orders", methods=["GET"])
+@admin_required
+def api_new_orders():
+    # تحديد آخر رقم طلب شاهده المتصفح
+    try:
+        after_id = int(request.args.get("after", "0"))
+        if after_id < 0:
+            after_id = 0
+    except (TypeError, ValueError):
+        after_id = 0
+
+    # قراءة الطلبات الموجودة دون تعديلها
+    with connect() as db:
+        latest_row = db.execute(
+            "SELECT COALESCE(MAX(id), 0) AS latest_id FROM orders"
+        ).fetchone()
+
+        latest_id = int(latest_row["latest_id"] or 0)
+
+        rows = db.execute(
+            """
+            SELECT
+                id,
+                created_at,
+                customer_name,
+                phone,
+                service,
+                category
+            FROM orders
+            WHERE id > %s
+            ORDER BY id ASC
+            LIMIT 100
+            """,
+            (after_id,),
+        ).fetchall()
+
+    # تجهيز البيانات التي يحتاجها ملف الإشعارات
+    new_orders = [
+        {
+            "id": int(order["id"]),
+            "order_number": f"HA-{int(order['id']):05d}",
+            "created_at": order["created_at"],
+            "customer_name": order["customer_name"],
+            "phone": order["phone"],
+            "service": order["service"],
+            "category": order["category"],
+        }
+        for order in rows
+    ]
+
+    return jsonify({
+        "orders": new_orders,
+        "latest_id": latest_id,
+    })
 
 
 # =========================================================

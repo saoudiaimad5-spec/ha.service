@@ -1034,7 +1034,6 @@ def change_password():
 
 @app.route("/api/chat", methods=["POST"])
 def ai_chat():
-    # لا نقبل رسائل طويلة أو فارغة، ولا نرسل ملفات أو بيانات الطلبات إلى Gemini.
     payload = request.get_json(silent=True) or {}
     message = str(payload.get("message", "")).strip()
     language = str(payload.get("language", "ar")).lower()
@@ -1046,53 +1045,84 @@ def ai_chat():
 
     api_key = os.environ.get("GEMINI_API_KEY", "").strip()
     if not api_key:
-        return jsonify({
-            "error": "المساعد الذكي غير مفعّل حاليًا. تواصل معنا عبر واتساب."
-        }), 503
+        app.logger.error("Gemini configuration error: GEMINI_API_KEY is missing")
+        return jsonify({"error": "المساعد الذكي غير مفعّل حاليًا. تواصل معنا عبر واتساب."}), 503
 
+    is_french = language.startswith("fr")
     language_instruction = (
-        "Réponds en français." if language == "fr"
-        else "أجب باللغة العربية الواضحة."
+        "Réponds en français clair et naturel."
+        if is_french else "أجب باللغة العربية الواضحة والمبسطة."
     )
-    prompt = (
-        "أنت مساعد خدمة العملاء لمكتب H&A SERVICE في الجزائر. "
-        "ساعد الزبون في فهم خدمات المكتب مثل الطباعة والنسخ والمسح الضوئي "
-        "وإدخال البيانات والمساعدة في الملفات والإجراءات الإدارية والجامعية. "
-        "كن مهذبًا ومختصرًا. لا تخترع أسعارًا أو آجالًا أو شروطًا رسمية؛ "
-        "إذا احتجت إلى سعر أو تأكيد، اطلب منه التواصل مع المكتب عبر واتساب. "
-        "لا تدّع أنك أرسلت طلبًا أو تحققت من حالة طلب. "
-        "لا تطلب كلمات المرور أو أرقام البطاقات أو معلومات سرية. "
-        "لا تقدم نفسك كجهة حكومية ولا كبديل عن الجهة الرسمية. "
-        f"{language_instruction}\n\nسؤال الزبون: {message}"
-    )
+
+    prompt = f"""
+أنت مساعد خدمة العملاء لمكتب H&A SERVICE في الجزائر.
+ساعد الزبائن في خدمات الطباعة والنسخ والمسح الضوئي وإدخال البيانات والملفات والإجراءات الإدارية والجامعية.
+إذا طلب الزبون تنسيق مذكرة جامعية، فاطلب منه إرسال النص أو إرفاق ملف Word أو PDF. إذا أرسل نصًا، ساعده في ترتيب العناوين والفقرات والتعداد وتصحيح اللغة.
+لا تدّع أنك قرأت ملفًا لم يُرسل محتواه، ولا تخترع أسعارًا أو آجالًا أو شروطًا رسمية، ولا تطلب كلمات المرور أو معلومات البطاقات البنكية.
+إذا احتاج الزبون إلى سعر أو تأكيد رسمي، وجّهه للتواصل مع المكتب عبر واتساب.
+كن مهذبًا وعمليًا ومختصرًا.
+{language_instruction}
+
+رسالة الزبون:
+{message}
+""".strip()
+
+    # غيّر اسم النموذج فقط إلى نموذج ظاهر ومتاح لمشروعك في Google AI Studio.
+    # gemini-2.5-flash قد يكون غير متاح لهذا المشروع، ما يسبب HTTP 404.
+    model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash").strip()
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
     body = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": 0.4, "maxOutputTokens": 500}
+        "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+        "generationConfig": {"temperature": 0.4, "maxOutputTokens": 700},
     }
-    url = (
-        "https://generativelanguage.googleapis.com/v1beta/models/"
-        "gemini-2.5-flash:generateContent?key=" + api_key
-    )
     req = urllib.request.Request(
         url,
         data=json.dumps(body).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        headers={"Content-Type": "application/json", "x-goog-api-key": api_key},
         method="POST",
     )
+
     try:
-        with urllib.request.urlopen(req, timeout=20) as response:
+        with urllib.request.urlopen(req, timeout=30) as response:
             result = json.loads(response.read().decode("utf-8"))
-        answer = result["candidates"][0]["content"]["parts"][0]["text"].strip()
+
+        candidates = result.get("candidates") or []
+        if not candidates:
+            app.logger.warning("Gemini returned no candidates; prompt feedback=%s", result.get("promptFeedback", {}))
+            return jsonify({"error": "لم يتمكن المساعد من إنشاء إجابة. أعد صياغة سؤالك أو تواصل معنا عبر واتساب."}), 502
+
+        parts = candidates[0].get("content", {}).get("parts", [])
+        answer = "\n".join(
+            part["text"].strip()
+            for part in parts
+            if isinstance(part, dict) and isinstance(part.get("text"), str) and part["text"].strip()
+        ).strip()
+
+        if not answer:
+            app.logger.warning("Gemini response had no text; finishReason=%s", candidates[0].get("finishReason"))
+            return jsonify({"error": "لم تصل إجابة نصية من المساعد. حاول مجددًا."}), 502
+
         return jsonify({"reply": answer})
+
     except urllib.error.HTTPError as exc:
-        # لا نعيد تفاصيل الاستجابة أو المفتاح إلى المتصفح.
+        # لا نطبع المفتاح أو محتوى الاستجابة الذي قد يحتوي تفاصيل حساسة.
+        app.logger.error("Gemini API HTTP error: %s (model=%s)", exc.code, model)
         if exc.code == 429:
-            return jsonify({"error": "بلغ المساعد حد الاستخدام المؤقت. حاول لاحقًا أو تواصل معنا عبر واتساب."}), 429
-        app.logger.warning("Gemini API returned HTTP %s", exc.code)
-        return jsonify({"error": "تعذر على المساعد الرد الآن. حاول لاحقًا أو تواصل معنا عبر واتساب."}), 502
-    except (urllib.error.URLError, TimeoutError, KeyError, IndexError, ValueError):
-        app.logger.warning("Gemini request failed")
-        return jsonify({"error": "حدث خطأ مؤقت. حاول لاحقًا أو تواصل معنا عبر واتساب."}), 502
+            return jsonify({"error": "بلغ المساعد حد الاستخدام مؤقتًا. حاول لاحقًا أو تواصل معنا عبر واتساب."}), 429
+        if exc.code == 404:
+            return jsonify({"error": "نموذج Gemini المحدد غير متاح لهذا المشروع. تحقّق من GEMINI_MODEL في Render."}), 502
+        if exc.code in (400, 401, 403):
+            return jsonify({"error": "تعذر إعداد الاتصال بالمساعد. تحقّق من مفتاح Gemini وصلاحياته وإعدادات النموذج في Render."}), 502
+        return jsonify({"error": "خدمة المساعد غير متاحة مؤقتًا. حاول لاحقًا أو تواصل معنا عبر واتساب."}), 502
+
+    except (urllib.error.URLError, TimeoutError):
+        app.logger.warning("Gemini connection or timeout error")
+        return jsonify({"error": "تعذر الاتصال بالمساعد حاليًا. حاول لاحقًا."}), 502
+
+    except (KeyError, IndexError, TypeError, ValueError):
+        app.logger.exception("Unexpected Gemini response format")
+        return jsonify({"error": "حدث خطأ في معالجة إجابة المساعد. حاول مجددًا."}), 502
+
 
 
 # =========================================================

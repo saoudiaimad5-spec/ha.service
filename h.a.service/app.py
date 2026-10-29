@@ -1,5 +1,8 @@
 import os
 import secrets
+import json
+import urllib.request
+import urllib.error
 from datetime import datetime
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from functools import wraps
@@ -1024,6 +1027,74 @@ def change_password():
     return render_template("change_password.html")
 
 
+
+# =========================================================
+# مساعد H&A الذكي (Gemini) - المفتاح يبقى على الخادم
+# =========================================================
+
+@app.route("/api/chat", methods=["POST"])
+def ai_chat():
+    # لا نقبل رسائل طويلة أو فارغة، ولا نرسل ملفات أو بيانات الطلبات إلى Gemini.
+    payload = request.get_json(silent=True) or {}
+    message = str(payload.get("message", "")).strip()
+    language = str(payload.get("language", "ar")).lower()
+
+    if not message:
+        return jsonify({"error": "اكتب سؤالك أولاً."}), 400
+    if len(message) > 2000:
+        return jsonify({"error": "الرسالة طويلة جدًا. اختصرها إلى 2000 حرف."}), 400
+
+    api_key = os.environ.get("GEMINI_API_KEY", "").strip()
+    if not api_key:
+        return jsonify({
+            "error": "المساعد الذكي غير مفعّل حاليًا. تواصل معنا عبر واتساب."
+        }), 503
+
+    language_instruction = (
+        "Réponds en français." if language == "fr"
+        else "أجب باللغة العربية الواضحة."
+    )
+    prompt = (
+        "أنت مساعد خدمة العملاء لمكتب H&A SERVICE في الجزائر. "
+        "ساعد الزبون في فهم خدمات المكتب مثل الطباعة والنسخ والمسح الضوئي "
+        "وإدخال البيانات والمساعدة في الملفات والإجراءات الإدارية والجامعية. "
+        "كن مهذبًا ومختصرًا. لا تخترع أسعارًا أو آجالًا أو شروطًا رسمية؛ "
+        "إذا احتجت إلى سعر أو تأكيد، اطلب منه التواصل مع المكتب عبر واتساب. "
+        "لا تدّع أنك أرسلت طلبًا أو تحققت من حالة طلب. "
+        "لا تطلب كلمات المرور أو أرقام البطاقات أو معلومات سرية. "
+        "لا تقدم نفسك كجهة حكومية ولا كبديل عن الجهة الرسمية. "
+        f"{language_instruction}\n\nسؤال الزبون: {message}"
+    )
+    body = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {"temperature": 0.4, "maxOutputTokens": 500}
+    }
+    url = (
+        "https://generativelanguage.googleapis.com/v1beta/models/"
+        "gemini-2.5-flash:generateContent?key=" + api_key
+    )
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(body).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=20) as response:
+            result = json.loads(response.read().decode("utf-8"))
+        answer = result["candidates"][0]["content"]["parts"][0]["text"].strip()
+        return jsonify({"reply": answer})
+    except urllib.error.HTTPError as exc:
+        # لا نعيد تفاصيل الاستجابة أو المفتاح إلى المتصفح.
+        if exc.code == 429:
+            return jsonify({"error": "بلغ المساعد حد الاستخدام المؤقت. حاول لاحقًا أو تواصل معنا عبر واتساب."}), 429
+        app.logger.warning("Gemini API returned HTTP %s", exc.code)
+        return jsonify({"error": "تعذر على المساعد الرد الآن. حاول لاحقًا أو تواصل معنا عبر واتساب."}), 502
+    except (urllib.error.URLError, TimeoutError, KeyError, IndexError, ValueError):
+        app.logger.warning("Gemini request failed")
+        return jsonify({"error": "حدث خطأ مؤقت. حاول لاحقًا أو تواصل معنا عبر واتساب."}), 502
+
+
 # =========================================================
 # تشغيل التطبيق محليًا
 # =========================================================
@@ -1034,3 +1105,4 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "5000")),
         debug=False,
     )
+

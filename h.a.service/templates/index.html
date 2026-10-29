@@ -258,5 +258,33 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 </script>
+
+<style>
+#ha-ai-launch{position:fixed;bottom:20px;right:20px;z-index:9998;background:#c9a45c;color:#111;border:0;border-radius:999px;padding:13px 18px;font-weight:800;box-shadow:0 5px 22px #0003;cursor:pointer}
+#ha-ai-panel{position:fixed;bottom:78px;right:20px;width:min(350px,calc(100vw - 32px));height:430px;max-height:70vh;z-index:9999;background:#fff;color:#171717;border:1px solid #d6b76e;border-radius:16px;box-shadow:0 12px 40px #0003;display:none;overflow:hidden;font-family:Arial,sans-serif}
+#ha-ai-panel.open{display:flex;flex-direction:column}#ha-ai-head{background:#171717;color:#fff;padding:14px;display:flex;justify-content:space-between;align-items:center}
+#ha-ai-head button{background:transparent;border:0;color:#fff;font-size:22px;cursor:pointer}#ha-ai-messages{padding:12px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:9px;background:#faf9f6}
+.ha-ai-msg{padding:10px 12px;border-radius:12px;max-width:90%;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.5}.ha-ai-bot{background:#eee9dd;align-self:flex-start}.ha-ai-user{background:#171717;color:white;align-self:flex-end}
+#ha-ai-form{display:flex;gap:6px;padding:10px;border-top:1px solid #ddd}#ha-ai-input{flex:1;min-width:0;padding:10px;border:1px solid #ccc;border-radius:9px}#ha-ai-form button{border:0;border-radius:9px;padding:0 14px;background:#c9a45c;font-weight:bold}
+</style>
+<button id="ha-ai-launch" type="button" aria-controls="ha-ai-panel">✨ مساعد H&A</button>
+<section id="ha-ai-panel" aria-label="مساعد H&A الذكي">
+ <div id="ha-ai-head"><strong>H&A SERVICE — مساعد ذكي</strong><button id="ha-ai-close" type="button" aria-label="إغلاق">×</button></div>
+ <div id="ha-ai-messages"><div class="ha-ai-msg ha-ai-bot">مرحبًا! 👋 كيف يمكنني مساعدتك في خدمات H&A SERVICE؟ لا ترسل كلمات مرور أو معلومات بنكية.</div></div>
+ <form id="ha-ai-form"><input id="ha-ai-input" maxlength="2000" placeholder="اكتب سؤالك هنا..." autocomplete="off" required><button type="submit">إرسال</button></form>
+</section>
+<script>
+(function(){
+ const launch=document.getElementById('ha-ai-launch'),panel=document.getElementById('ha-ai-panel'),close=document.getElementById('ha-ai-close'),form=document.getElementById('ha-ai-form'),input=document.getElementById('ha-ai-input'),messages=document.getElementById('ha-ai-messages');
+ launch.addEventListener('click',()=>panel.classList.toggle('open'));close.addEventListener('click',()=>panel.classList.remove('open'));
+ function addMessage(text,kind){const el=document.createElement('div');el.className='ha-ai-msg '+(kind==='user'?'ha-ai-user':'ha-ai-bot');el.textContent=text;messages.appendChild(el);messages.scrollTop=messages.scrollHeight;return el;}
+ form.addEventListener('submit',async function(e){e.preventDefault();const message=input.value.trim();if(!message)return;addMessage(message,'user');input.value='';input.disabled=true;const pending=addMessage('جارٍ التفكير...','bot');
+ try{const language=localStorage.getItem('ha_language')||'ar';const response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message,language})});const data=await response.json();pending.textContent=data.reply||data.error||'تعذر الحصول على رد.';}
+ catch(err){pending.textContent='تعذر الاتصال بالمساعد. يرجى المحاولة لاحقًا أو التواصل عبر واتساب.';}
+ finally{input.disabled=false;input.focus();messages.scrollTop=messages.scrollHeight;}
+ });
+})();
+</script>
+
 </body>
 </html>

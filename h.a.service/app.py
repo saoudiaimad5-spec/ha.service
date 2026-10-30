@@ -3,6 +3,7 @@ import secrets
 import json
 import urllib.request
 import urllib.error
+import time
 from datetime import datetime
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from functools import wraps
@@ -1083,8 +1084,28 @@ def ai_chat():
     )
 
     try:
-        with urllib.request.urlopen(req, timeout=30) as response:
-            result = json.loads(response.read().decode("utf-8"))
+        # إعادة المحاولة عند الضغط المؤقت على Gemini (503/429/500).
+        # ثلاث محاولات كحد أقصى مع انتظار تدريجي لتجنب تعليق الطلب طويلًا.
+        result = None
+        for attempt in range(3):
+            try:
+                with urllib.request.urlopen(req, timeout=25) as response:
+                    result = json.loads(response.read().decode("utf-8"))
+                break
+            except urllib.error.HTTPError as retry_error:
+                if retry_error.code in (429, 500, 502, 503, 504) and attempt < 2:
+                    wait_seconds = 2 ** attempt
+                    app.logger.warning(
+                        "Gemini temporary HTTP error %s; retry %s/2 after %s seconds (model=%s)",
+                        retry_error.code, attempt + 1, wait_seconds, model
+                    )
+                    time.sleep(wait_seconds)
+                    continue
+                raise
+
+        if result is None:
+            app.logger.error("Gemini request ended without a response (model=%s)", model)
+            return jsonify({"error": "المساعد مشغول حاليًا. حاول مرة أخرى بعد قليل."}), 503
 
         candidates = result.get("candidates") or []
         if not candidates:
@@ -1135,4 +1156,3 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "5000")),
         debug=False,
     )
-

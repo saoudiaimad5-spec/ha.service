@@ -1089,7 +1089,7 @@ def ai_chat():
         result = None
         for attempt in range(3):
             try:
-                with urllib.request.urlopen(req, timeout=25) as response:
+                with urllib.request.urlopen(req, timeout=90) as response:
                     result = json.loads(response.read().decode("utf-8"))
                 break
             except urllib.error.HTTPError as retry_error:

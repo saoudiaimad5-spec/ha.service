@@ -1136,9 +1136,14 @@ def ai_chat():
             return jsonify({"error": "تعذر إعداد الاتصال بالمساعد. تحقّق من مفتاح Gemini وصلاحياته وإعدادات النموذج في Render."}), 502
         return jsonify({"error": "خدمة المساعد غير متاحة مؤقتًا. حاول لاحقًا أو تواصل معنا عبر واتساب."}), 502
 
-    except (urllib.error.URLError, TimeoutError):
-        app.logger.warning("Gemini connection or timeout error")
-        return jsonify({"error": "تعذر الاتصال بالمساعد حاليًا. حاول لاحقًا."}), 502
+except (urllib.error.URLError, TimeoutError) as e:
+    app.logger.exception(
+        "Gemini connection or timeout error: %r", e
+    )
+    return jsonify({
+        "error": "تعذر الاتصال بالمساعد حاليًا. حاول لاحقًا."
+    }), 502
+
 
     except (KeyError, IndexError, TypeError, ValueError):
         app.logger.exception("Unexpected Gemini response format")
